@@ -1,0 +1,2 @@
+require 'sprtr'
+run Sprtr
