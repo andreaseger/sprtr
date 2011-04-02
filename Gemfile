@@ -2,7 +2,7 @@
 source "http://rubygems.org"
 
 gem 'sinatra'
-gem 'slim'
+gem 'haml'
 gem 'redis'
 #gem 'hiredis'
 gem 'redis-objects'
@@ -10,6 +10,9 @@ gem 'redis-objects'
 group :development do
   gem 'sinatra-reloader'
 
+  #testing
+  gem 'rspec'
+  
   #irb stuff
   gem 'wirble'
   gem 'hirb'

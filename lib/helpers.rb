@@ -9,17 +9,13 @@ module Sinatra
     response['WWW-Authenticate'] = %(Basic realm="Sprtr")
     throw(:halt, [401, "Not authorized\n"])
   end
-  
-  def logged_in?
-    @logged_in
-  end
-  
-  def check_auth
-    @logged_in = false
 
-    @auth ||=  Rack::Auth::Basic::Request.new(request.env)
-    return if !@auth.provided?
-
-    yield *@auth.credentials 
-  end
+  # assign them a random one and mail it to them, asking them to change it
+  #def forgot_password
+  #  @user = User.find_by_email(params[:email])
+  #  random_password = Array.new(10).map { (65 + rand(58)).chr }.join
+  #  @user.password = random_password
+  #  @user.save!
+  #  Mailer.create_and_deliver_password_change(@user, random_password)
+  #end
 end

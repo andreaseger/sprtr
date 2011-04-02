@@ -1,5 +1,6 @@
 #require 'hiredis'
 require 'redis'
+require 'models'
 
 redis_config = if ENV['REDIS_URL']
   require 'uri'

@@ -1,1 +1,109 @@
-#models
+require 'bcrypt'
+require 'redis/value'
+
+class User
+  attr_accessor :username, :followers, :following
+
+  def initialize(params={})
+    params.each do |key, value|
+      send("#{key}=", value)
+    end
+  end
+
+  def self.create username, new_password
+    raise if $redis.exists "#{self}:#{username}"
+    user = User.new(:username => username)
+    user.password = new_password
+    user.save
+  end
+
+  def self.load username
+    Redis::Value.new(db_key, :marshal => true).value
+  end
+
+  def save
+    Redis::Value.new(db_key, :marshal => true).value = self
+  end
+
+  def password
+    @password ||= BCrypt::Password.new(password_hash)
+  end
+
+  def password=(new_password)
+    @password = BCrypt::Password.create(new_password)
+    self.password_hash = @password
+  end
+
+  def tweets(limit=50)
+    t=$redis.zmembers "#{db_key}:tweets",0,limit
+    t
+    #Redis::SortedSet.new("#{db_key}:tweets", :marshal => true)[0,limit]
+  end
+
+#--- list of user following me
+  def followers
+    Redis::Set.new("#{db_key}:followers").members
+  end
+
+#--- list of user I follow
+  def following
+    Redis::Set.new("#{db_key}:following").members
+  end
+
+  def follow user
+    Redis::Set.new("#{db_key}:following") << user
+    Redis::Set.new("#{db_key(user)}:following") << username
+  end
+
+  def unfollow user
+    Redis::Set.new("#{db_key}:following").delete user
+    Redis::Set.new("#{db_key(user)}:following").delete username
+  end
+
+  def follows? user
+    Redis::Set.new("#{db_key}:following").member? user
+  end
+
+#--- personal timeline
+  def timeline
+    following.map{|user| user.tweets 10 }.flatten.sort{|a,b| b.time <=> a.time}
+  end
+
+#--- helper
+  def self.db_key username
+    "#{self}:#{username}"
+  end
+  def db_key
+    self.db_key username
+  end
+end
+
+class Status
+  attr_accessor :status, :username, :time
+
+  def initialize(params={})
+    params.each do |key, value|
+      send("#{key}=", value)
+    end
+  end
+
+  def self.create status, username
+    status = Status.new(:username => username, :status => status, :time => Time.now.to_i)
+    status.save
+  end
+
+  def save
+    Redis::List.new("#{db_key}:tweets", :marshal => true) << self
+  end
+
+  def time_nice
+    Time.at(time)
+  end
+#--- helper
+  def self.db_key username
+    "#{self}:#{username}"
+  end
+  def db_key user=username
+    self.db_key user
+  end
+end

@@ -24,6 +24,6 @@ class Sprtr < Sinatra::Base
   end
 
   get '/' do
-    'hello world'
+    "todo"
   end
 end
