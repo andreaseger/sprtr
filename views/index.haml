@@ -1,1 +1,40 @@
-/
+-if logged_in?
+  Welcome
+  =@user.username
+
+  %form{:action=>"/tweet", :method=>"post"}
+    %p
+      %input{:type=>"text", :name=>"status"}
+    %input{:type=>"submit", :value=>"tweet"}
+
+  %h1
+    Your tweets
+  -@user.tweets.each do |t|
+    %p
+      =t.status
+      =t.time_nice
+-else
+  Login now
+  %form{:action=>"/login", :method=>"post"}
+    %p
+      %label{:name=>"username"}Username
+      %input{:type=>"text", :name=>"username"}
+    %p
+      %label{:name=>"password"}Password
+      %input{:type=>"password", :name=>"password"}
+    %input{:type=>"submit", :value=>"Login"}
+  :javascript
+    document.forms[0].password.focus()
+
+  or SignUp
+  %form{:action=>"/signup", :method=>"post"}
+    %p
+      %label{:name=>"username"}Username
+      %input{:type=>"text", :name=>"username"}
+    %p
+      %label{:name=>"password"}Password
+      %input{:type=>"password", :name=>"password"}
+    %p
+      %label{:name=>"password_confirmation"}Password Confirmation
+      %input{:type=>"password", :name=>"password_confirmation"}
+    %input{:type=>"submit", :value=>"Login"}

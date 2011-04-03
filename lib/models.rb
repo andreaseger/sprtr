@@ -1,8 +1,10 @@
 require 'bcrypt'
 require 'redis/value'
+require 'redis/Set'
+require 'redis/List'
 
 class User
-  attr_accessor :username, :followers, :following
+  attr_accessor :username, :password_hash, :followers, :following
 
   def initialize(params={})
     params.each do |key, value|
@@ -18,7 +20,7 @@ class User
   end
 
   def self.load username
-    Redis::Value.new(db_key, :marshal => true).value
+    Redis::Value.new(db_key(username), :marshal => true).value
   end
 
   def save
@@ -35,9 +37,7 @@ class User
   end
 
   def tweets(limit=50)
-    t=$redis.zmembers "#{db_key}:tweets",0,limit
-    t
-    #Redis::SortedSet.new("#{db_key}:tweets", :marshal => true)[0,limit]
+    Redis::List.new("Status:#{username}", :marshal => true).values.reverse
   end
 
 #--- list of user following me
@@ -74,7 +74,7 @@ class User
     "#{self}:#{username}"
   end
   def db_key
-    self.db_key username
+    "#{self.class}:#{username}"
   end
 end
 
@@ -93,7 +93,7 @@ class Status
   end
 
   def save
-    Redis::List.new("#{db_key}:tweets", :marshal => true) << self
+    Redis::List.new("#{db_key(username)}", :marshal => true) << self
   end
 
   def time_nice
@@ -103,7 +103,7 @@ class Status
   def self.db_key username
     "#{self}:#{username}"
   end
-  def db_key user=username
-    self.db_key user
+  def db_key username
+    "#{self.class}:#{username}"
   end
 end
